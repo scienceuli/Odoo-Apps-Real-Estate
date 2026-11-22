@@ -33,11 +33,17 @@ class Apartment(models.Model):
     land_register = fields.Char("Grundbuch / Flurstück")
 
     # Beteiligte
+    manager_ids = fields.One2many(
+        "apartment.manager", "apartment_id", "Verwaltungen",
+        context={"active_test": False},
+    )
     property_manager_id = fields.Many2one(
-        "res.partner", "Hausverwaltung", tracking=True, help="WEG-/Hausverwaltung"
+        "res.partner", "Hausverwaltung", compute="_compute_current_managers", store=True,
+        index=True, help="Aktuelle WEG-/Hausverwaltung (aus den aktiven Verwaltungen)",
     )
     rental_manager_id = fields.Many2one(
-        "res.partner", "Mieterverwaltung", tracking=True, help="Mietverwaltung (SE-Verwaltung)"
+        "res.partner", "Mieterverwaltung", compute="_compute_current_managers", store=True,
+        index=True, help="Aktuelle Mietverwaltung (aus den aktiven Verwaltungen)",
     )
     tenant_id = fields.Many2one("res.partner", "Mieter", tracking=True)
 
@@ -71,6 +77,15 @@ class Apartment(models.Model):
             rec.cost_monthly = sum(rec.cost_ids.mapped("amount_monthly"))
             rec.net_monthly = rec.rent_total - rec.cost_monthly
             rec.net_yearly = rec.net_monthly * 12
+
+    @api.depends("manager_ids.active", "manager_ids.role", "manager_ids.partner_id")
+    def _compute_current_managers(self):
+        for rec in self:
+            current = rec.with_context(active_test=False).manager_ids.filtered("active")
+            prop = current.filtered(lambda m: m.role in ("property", "both"))[:1]
+            rent = current.filtered(lambda m: m.role in ("rental", "both"))[:1]
+            rec.property_manager_id = prop.partner_id
+            rec.rental_manager_id = rent.partner_id
 
     @api.depends("document_ids")
     def _compute_document_count(self):

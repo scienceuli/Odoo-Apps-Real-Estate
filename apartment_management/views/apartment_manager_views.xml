@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_apartment_manager_list" model="ir.ui.view">
+        <field name="name">apartment.manager.list</field>
+        <field name="model">apartment.manager</field>
+        <field name="arch" type="xml">
+            <list editable="bottom" decoration-muted="not active">
+                <field name="apartment_id"/>
+                <field name="partner_id"/>
+                <field name="role"/>
+                <field name="contact_id" optional="show"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="note" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+                <button name="action_end" type="object" string="Beenden" icon="fa-stop-circle-o"
+                        invisible="not active" confirm="Diese Verwaltung beenden und archivieren?"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_apartment_manager_search" model="ir.ui.view">
+        <field name="name">apartment.manager.search</field>
+        <field name="model">apartment.manager</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="partner_id"/>
+                <field name="apartment_id"/>
+                <filter name="filter_active" string="Aktiv" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Historie" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter name="filter_property" string="Hausverwaltung"
+                        domain="[('role', 'in', ('property', 'both'))]"/>
+                <filter name="filter_rental" string="Mieterverwaltung"
+                        domain="[('role', 'in', ('rental', 'both'))]"/>
+                <group>
+                    <filter name="group_partner" string="Verwaltung" context="{'group_by': 'partner_id'}"/>
+                    <filter name="group_apartment" string="Wohnung" context="{'group_by': 'apartment_id'}"/>
+                    <filter name="group_role" string="Funktion" context="{'group_by': 'role'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_apartment_manager" model="ir.actions.act_window">
+        <field name="name">Verwaltungen</field>
+        <field name="res_model">apartment.manager</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False, 'search_default_filter_active': 1}</field>
+    </record>
+</odoo>

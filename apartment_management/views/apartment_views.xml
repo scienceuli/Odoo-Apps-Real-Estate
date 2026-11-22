@@ -70,10 +70,10 @@
                     </group>
                     <group>
                         <group string="Beteiligte">
-                            <field name="property_manager_id"
-                                   context="{'default_is_company': True}"/>
-                            <field name="rental_manager_id"
-                                   context="{'default_is_company': True}"/>
+                            <field name="property_manager_id" readonly="1"
+                                   placeholder="siehe Reiter Verwaltung"/>
+                            <field name="rental_manager_id" readonly="1"
+                                   placeholder="siehe Reiter Verwaltung"/>
                             <field name="tenant_id"/>
                         </group>
                         <group string="Mietverhältnis">
@@ -96,6 +96,22 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Verwaltung" name="managers">
+                            <field name="manager_ids" context="{'default_apartment_id': id}">
+                                <list editable="bottom" decoration-muted="not active">
+                                    <field name="partner_id"/>
+                                    <field name="role"/>
+                                    <field name="contact_id" optional="show"/>
+                                    <field name="date_from"/>
+                                    <field name="date_to"/>
+                                    <field name="note" optional="hide"/>
+                                    <field name="active" widget="boolean_toggle"/>
+                                    <button name="action_end" type="object" string="Beenden"
+                                            icon="fa-stop-circle-o" invisible="not active or not id"
+                                            confirm="Diese Verwaltung beenden und archivieren?"/>
+                                </list>
+                            </field>
+                        </page>
                         <page string="Kosten" name="costs">
                             <field name="cost_ids">
                                 <list editable="bottom">

@@ -7,13 +7,14 @@ class ResPartner(models.Model):
     apartment_count = fields.Integer("Wohnungen", compute="_compute_apartment_count")
 
     def _apartment_domain(self):
-        return [
-            "|",
-            "|",
-            ("tenant_id", "in", self.ids),
-            ("property_manager_id", "in", self.ids),
-            ("rental_manager_id", "in", self.ids),
-        ]
+        """Apartments where the partner is tenant or (current or former) manager."""
+        managed = (
+            self.env["apartment.manager"]
+            .with_context(active_test=False)
+            .search([("partner_id", "in", self.ids)])
+            .apartment_id
+        )
+        return ["|", ("tenant_id", "in", self.ids), ("id", "in", managed.ids)]
 
     def _compute_apartment_count(self):
         Apartment = self.env["apartment.apartment"]

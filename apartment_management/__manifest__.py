@@ -1,7 +1,7 @@
 {
     "name": "Wohnungsverwaltung",
     "summary": "Einfache Verwaltung vermieteter Wohnungen: Mieter, Miete, Kosten und Dokumente",
-    "version": "20.0.1.0.0",
+    "version": "20.0.1.1.0",
     "category": "Real Estate",
     "license": "AGPL-3",
     "author": "Ulrich Kilian",
@@ -11,6 +11,7 @@
         "security/ir.access.csv",
         "data/res_partner_category_data.xml",
         "views/apartment_document_views.xml",
+        "views/apartment_manager_views.xml",
         "views/apartment_views.xml",
         "views/res_partner_views.xml",
         "views/menus.xml",
