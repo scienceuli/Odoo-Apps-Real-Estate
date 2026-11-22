@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_apartment_list" model="ir.ui.view">
+        <field name="name">apartment.apartment.list</field>
+        <field name="model">apartment.apartment</field>
+        <field name="arch" type="xml">
+            <list decoration-muted="state == 'vacant'">
+                <field name="name"/>
+                <field name="city" optional="show"/>
+                <field name="area" optional="show" sum="Total"/>
+                <field name="tenant_id"/>
+                <field name="property_manager_id" optional="hide"/>
+                <field name="rental_manager_id" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'rented'"
+                       decoration-warning="state == 'vacant'"
+                       decoration-info="state == 'own_use'"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="rent_cold" sum="Total"/>
+                <field name="rent_total" sum="Total" optional="show"/>
+                <field name="cost_monthly" sum="Total"/>
+                <field name="net_monthly" sum="Total"/>
+                <field name="net_yearly" sum="Total" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_apartment_form" model="ir.ui.view">
+        <field name="name">apartment.apartment.form</field>
+        <field name="model">apartment.apartment</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <field name="state" widget="statusbar" options="{'clickable': '1'}"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_documents" type="object"
+                                class="oe_stat_button" icon="fa-file-pdf-o">
+                            <field name="document_count" widget="statinfo" string="Dokumente"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archiviert" bg_color="text-bg-danger"
+                            invisible="active"/>
+                    <field name="active" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="z. B. Musterstrasse 5, 2. OG links"/></h1>
+                    </div>
+                    <group>
+                        <group string="Lage">
+                            <label for="street" string="Adresse"/>
+                            <div class="o_address_format">
+                                <field name="street" placeholder="Strasse" class="o_address_street"/>
+                                <field name="zip" placeholder="PLZ" class="o_address_zip"/>
+                                <field name="city" placeholder="Ort" class="o_address_city"/>
+                                <field name="country_id" placeholder="Land" class="o_address_country"
+                                       options="{'no_create': True}"/>
+                            </div>
+                            <field name="unit_number"/>
+                            <field name="floor"/>
+                            <field name="land_register"/>
+                        </group>
+                        <group string="Objekt">
+                            <field name="rooms"/>
+                            <field name="area"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Beteiligte">
+                            <field name="property_manager_id"
+                                   context="{'default_is_company': True}"/>
+                            <field name="rental_manager_id"
+                                   context="{'default_is_company': True}"/>
+                            <field name="tenant_id"/>
+                        </group>
+                        <group string="Mietverhältnis">
+                            <field name="lease_start"/>
+                            <field name="lease_end"/>
+                            <field name="deposit"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Einnahmen / Monat">
+                            <field name="rent_cold"/>
+                            <field name="rent_utilities"/>
+                            <field name="rent_other"/>
+                            <field name="rent_total" class="fw-bold"/>
+                        </group>
+                        <group string="Übersicht">
+                            <field name="cost_monthly"/>
+                            <field name="net_monthly" class="fw-bold"/>
+                            <field name="net_yearly"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Kosten" name="costs">
+                            <field name="cost_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                    <field name="cost_type"/>
+                                    <field name="name"/>
+                                    <field name="partner_id"/>
+                                    <field name="amount"/>
+                                    <field name="interval"/>
+                                    <field name="amount_monthly" sum="Total"/>
+                                    <field name="amount_yearly" sum="Total" optional="show"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Dokumente" name="documents">
+                            <field name="document_ids" context="{'default_apartment_id': id}">
+                                <list>
+                                    <field name="date"/>
+                                    <field name="year"/>
+                                    <field name="document_type"/>
+                                    <field name="name"/>
+                                    <field name="file_name" column_invisible="True"/>
+                                    <field name="file" filename="file_name" widget="binary"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Notizen" name="notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_apartment_search" model="ir.ui.view">
+        <field name="name">apartment.apartment.search</field>
+        <field name="model">apartment.apartment</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="city"/>
+                <field name="tenant_id"/>
+                <field name="property_manager_id"/>
+                <field name="rental_manager_id"/>
+                <filter name="filter_rented" string="Vermietet" domain="[('state', '=', 'rented')]"/>
+                <filter name="filter_vacant" string="Leerstand" domain="[('state', '=', 'vacant')]"/>
+                <separator/>
+                <filter name="filter_archived" string="Archiviert" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_city" string="Ort" context="{'group_by': 'city'}"/>
+                    <filter name="group_property_manager" string="Hausverwaltung"
+                            context="{'group_by': 'property_manager_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_apartment" model="ir.actions.act_window">
+        <field name="name">Wohnungen</field>
+        <field name="res_model">apartment.apartment</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Erste Wohnung anlegen</p>
+        </field>
+    </record>
+
+    <record id="action_apartment_cost" model="ir.actions.act_window">
+        <field name="name">Kosten</field>
+        <field name="res_model">apartment.cost</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_group_apartment': 1}</field>
+    </record>
+
+    <record id="view_apartment_cost_list" model="ir.ui.view">
+        <field name="name">apartment.cost.list</field>
+        <field name="model">apartment.cost</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="apartment_id"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="cost_type"/>
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="amount"/>
+                <field name="interval"/>
+                <field name="amount_monthly" sum="Total"/>
+                <field name="amount_yearly" sum="Total"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_apartment_cost_search" model="ir.ui.view">
+        <field name="name">apartment.cost.search</field>
+        <field name="model">apartment.cost</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="apartment_id"/>
+                <field name="partner_id"/>
+                <field name="cost_type"/>
+                <group>
+                    <filter name="group_apartment" string="Wohnung" context="{'group_by': 'apartment_id'}"/>
+                    <filter name="group_type" string="Kostenart" context="{'group_by': 'cost_type'}"/>
+                    <filter name="group_partner" string="Empfänger" context="{'group_by': 'partner_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+</odoo>

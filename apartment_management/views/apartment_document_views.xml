@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_apartment_document_list" model="ir.ui.view">
+        <field name="name">apartment.document.list</field>
+        <field name="model">apartment.document</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="date"/>
+                <field name="year"/>
+                <field name="apartment_id"/>
+                <field name="document_type"/>
+                <field name="name"/>
+                <field name="partner_id" optional="show"/>
+                <field name="file_name" column_invisible="True"/>
+                <field name="file" filename="file_name" widget="binary"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_apartment_document_form" model="ir.ui.view">
+        <field name="name">apartment.document.form</field>
+        <field name="model">apartment.document</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="apartment_id"/>
+                            <field name="document_type"/>
+                            <field name="partner_id"/>
+                        </group>
+                        <group>
+                            <field name="date"/>
+                            <field name="year" options="{'format': false}"/>
+                            <field name="file_name" invisible="1"/>
+                            <field name="file" filename="file_name"
+                                   options="{'accepted_file_extensions': '.pdf'}"/>
+                        </group>
+                    </group>
+                    <field name="note" placeholder="Bemerkung ..."/>
+                    <field name="file" widget="pdf_viewer" invisible="not file" readonly="1"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_apartment_document_search" model="ir.ui.view">
+        <field name="name">apartment.document.search</field>
+        <field name="model">apartment.document</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="apartment_id"/>
+                <field name="partner_id"/>
+                <field name="year"/>
+                <filter name="filter_lease" string="Mietverträge" domain="[('document_type', '=', 'lease')]"/>
+                <filter name="filter_annual" string="Jahresabrechnungen" domain="[('document_type', '=', 'annual_statement')]"/>
+                <filter name="filter_utility" string="Nebenkostenabrechnungen" domain="[('document_type', '=', 'utility_statement')]"/>
+                <filter name="filter_tax" string="Steuer" domain="[('document_type', '=', 'tax')]"/>
+                <group>
+                    <filter name="group_apartment" string="Wohnung" context="{'group_by': 'apartment_id'}"/>
+                    <filter name="group_type" string="Dokumentart" context="{'group_by': 'document_type'}"/>
+                    <filter name="group_year" string="Jahr" context="{'group_by': 'year'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_apartment_document" model="ir.actions.act_window">
+        <field name="name">Dokumente</field>
+        <field name="res_model">apartment.document</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

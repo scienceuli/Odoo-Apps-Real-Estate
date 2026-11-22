@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_apartment_root" name="Wohnungen" sequence="60"
+              web_icon="apartment_management,static/description/icon.png"/>
+
+    <menuitem id="menu_apartment" name="Wohnungen" parent="menu_apartment_root"
+              action="action_apartment" sequence="10"/>
+    <menuitem id="menu_apartment_cost" name="Kosten" parent="menu_apartment_root"
+              action="action_apartment_cost" sequence="20"/>
+    <menuitem id="menu_apartment_document" name="Dokumente" parent="menu_apartment_root"
+              action="action_apartment_document" sequence="30"/>
+
+    <menuitem id="menu_apartment_config" name="Konfiguration" parent="menu_apartment_root"
+              sequence="90"/>
+    <menuitem id="menu_apartment_contacts" name="Kontakte" parent="menu_apartment_config"
+              action="contacts.action_contacts" sequence="10"/>
+</odoo>

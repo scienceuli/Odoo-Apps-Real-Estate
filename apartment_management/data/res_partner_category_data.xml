@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="partner_category_property_manager" model="res.partner.category">
+        <field name="name">Hausverwaltung</field>
+    </record>
+    <record id="partner_category_rental_manager" model="res.partner.category">
+        <field name="name">Mieterverwaltung</field>
+    </record>
+    <record id="partner_category_tenant" model="res.partner.category">
+        <field name="name">Mieter</field>
+    </record>
+</odoo>

@@ -1,0 +1,4 @@
+id,name,model_id,group_id/id,operation,domain
+access_apartment_apartment_user,apartment.apartment user,apartment.apartment,base.group_user,crud,
+access_apartment_cost_user,apartment.cost user,apartment.cost,base.group_user,crud,
+access_apartment_document_user,apartment.document user,apartment.document,base.group_user,crud,
