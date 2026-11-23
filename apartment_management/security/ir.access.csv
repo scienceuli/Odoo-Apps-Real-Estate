@@ -3,3 +3,11 @@ access_apartment_apartment_user,apartment.apartment user,apartment.apartment,bas
 access_apartment_cost_user,apartment.cost user,apartment.cost,base.group_user,crud,
 access_apartment_document_user,apartment.document user,apartment.document,base.group_user,crud,
 access_apartment_manager_user,apartment.manager user,apartment.manager,base.group_user,crud,
+access_apartment_booking_category_user,apartment.booking.category user,apartment.booking.category,base.group_user,r,
+access_apartment_booking_category_accountant,apartment.booking.category accountant,apartment.booking.category,account.group_account_user,crud,
+apartment_booking_category_company_rule,apartment.booking.category company,apartment.booking.category,,crud,"[('company_id', 'in', company_ids)]"
+access_apartment_bank_rule_accountant,apartment.bank.rule accountant,apartment.bank.rule,account.group_account_user,crud,
+apartment_bank_rule_company_rule,apartment.bank.rule company,apartment.bank.rule,,crud,"[('company_id', 'in', company_ids)]"
+access_apartment_bank_import_accountant,apartment.bank.import accountant,apartment.bank.import,account.group_account_user,crud,
+access_apartment_interest_entry_accountant,apartment.interest.entry accountant,apartment.interest.entry,account.group_account_user,crud,
+access_apartment_accounting_setup_manager,apartment.accounting.setup manager,apartment.accounting.setup,account.group_account_manager,crud,

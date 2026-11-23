@@ -7,8 +7,24 @@
               action="action_apartment" sequence="10"/>
     <menuitem id="menu_apartment_manager" name="Verwaltungen" parent="menu_apartment_root"
               action="action_apartment_manager" sequence="15"/>
-    <menuitem id="menu_apartment_cost" name="Kosten" parent="menu_apartment_root"
+    <menuitem id="menu_apartment_cost" name="Kosten (Plan)" parent="menu_apartment_root"
               action="action_apartment_cost" sequence="20"/>
+
+    <menuitem id="menu_apartment_accounting" name="Buchhaltung" parent="menu_apartment_root"
+              sequence="25" groups="account.group_account_user"/>
+    <menuitem id="menu_apartment_bank_line" name="Bankumsätze" parent="menu_apartment_accounting"
+              action="action_apartment_bank_line" sequence="10"/>
+    <menuitem id="menu_apartment_bank_line_to_check" name="Zu klären" parent="menu_apartment_accounting"
+              action="action_apartment_bank_line_to_check" sequence="20"/>
+    <menuitem id="menu_apartment_bank_import" name="Import" parent="menu_apartment_accounting"
+              action="action_apartment_bank_import" sequence="30"/>
+    <menuitem id="menu_apartment_interest_entry" name="Jahreszinsen buchen" parent="menu_apartment_accounting"
+              action="action_apartment_interest_entry" sequence="40"/>
+    <menuitem id="menu_apartment_cost_overview" name="Kostenübersicht je Wohnung"
+              parent="menu_apartment_accounting" action="action_apartment_cost_overview" sequence="50"/>
+    <menuitem id="menu_apartment_account_overview" name="Übersicht nach Konten"
+              parent="menu_apartment_accounting" action="action_apartment_account_overview" sequence="60"/>
+
     <menuitem id="menu_apartment_document" name="Dokumente" parent="menu_apartment_root"
               action="action_apartment_document" sequence="30"/>
 
@@ -16,4 +32,10 @@
               sequence="90"/>
     <menuitem id="menu_apartment_contacts" name="Kontakte" parent="menu_apartment_config"
               action="contacts.action_contacts" sequence="10"/>
+    <menuitem id="menu_apartment_booking_category" name="Kategorien &amp; Konten" parent="menu_apartment_config"
+              action="action_apartment_booking_category" sequence="20" groups="account.group_account_user"/>
+    <menuitem id="menu_apartment_bank_rule" name="Zuordnungsregeln" parent="menu_apartment_config"
+              action="action_apartment_bank_rule" sequence="30" groups="account.group_account_user"/>
+    <menuitem id="menu_apartment_accounting_setup" name="Buchhaltung einrichten" parent="menu_apartment_config"
+              action="action_apartment_accounting_setup" sequence="40" groups="account.group_account_manager"/>
 </odoo>

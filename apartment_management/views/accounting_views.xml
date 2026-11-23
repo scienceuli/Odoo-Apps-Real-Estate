@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================================ Bankumsätze -->
+    <record id="view_apartment_bank_line_list" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.apartment.list</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <list multi_edit="1" create="0" decoration-warning="not is_reconciled"
+                  decoration-muted="apartment_category_id and not apartment_ids">
+                <header>
+                    <button name="action_apartment_apply_rules" type="object" string="Regeln anwenden"/>
+                    <button name="action_apartment_rebook" type="object" string="Neu buchen"/>
+                </header>
+                <field name="date" readonly="1"/>
+                <field name="apartment_category_id" options="{'no_create': True}"/>
+                <field name="apartment_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <field name="partner_name" string="Gegenpartei" readonly="1"/>
+                <field name="payment_ref" string="Verwendungszweck" readonly="1"/>
+                <field name="account_number" string="IBAN" optional="hide" readonly="1"/>
+                <field name="apartment_assignment" optional="show" readonly="1"/>
+                <field name="apartment_assignment_info" optional="hide" readonly="1"/>
+                <field name="apartment_note" optional="hide"/>
+                <field name="journal_id" optional="hide" readonly="1"/>
+                <field name="company_id" column_invisible="True"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="is_reconciled" string="Gebucht" optional="show" widget="boolean" readonly="1"/>
+                <field name="amount" sum="Summe" readonly="1"
+                       decoration-success="amount &gt; 0" decoration-danger="amount &lt; 0"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_apartment_bank_line_form" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.apartment.form</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <form create="0">
+                <header>
+                    <button name="action_apartment_rebook" type="object" string="Neu buchen"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_apartment_open_move" type="object" class="oe_stat_button"
+                                icon="fa-book" string="Buchungssatz"/>
+                    </div>
+                    <widget name="web_ribbon" title="Zu klären" bg_color="text-bg-warning"
+                            invisible="is_reconciled"/>
+                    <field name="is_reconciled" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="company_id" invisible="1"/>
+                    <div class="oe_title">
+                        <h1><field name="amount" readonly="1" class="oe_inline"/></h1>
+                        <field name="payment_ref" readonly="1"/>
+                    </div>
+                    <group>
+                        <group string="Zuordnung">
+                            <field name="apartment_category_id" options="{'no_create': True}"/>
+                            <field name="apartment_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                            <field name="apartment_assignment" readonly="1"/>
+                            <field name="apartment_assignment_info" readonly="1"/>
+                            <field name="apartment_note"/>
+                        </group>
+                        <group string="Bankdaten">
+                            <field name="date" readonly="1"/>
+                            <field name="apartment_value_date" readonly="1"/>
+                            <field name="transaction_type" string="Umsatztyp" readonly="1"/>
+                            <field name="apartment_payer" readonly="1"/>
+                            <field name="apartment_payee" readonly="1"/>
+                            <field name="account_number" string="IBAN" readonly="1"/>
+                            <field name="journal_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Import" groups="base.group_no_one">
+                        <field name="apartment_import_key"/>
+                        <field name="transaction_details" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_apartment_bank_line_search" model="ir.ui.view">
+        <field name="name">account.bank.statement.line.apartment.search</field>
+        <field name="model">account.bank.statement.line</field>
+        <field name="priority">90</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="payment_ref" string="Verwendungszweck"/>
+                <field name="partner_name" string="Gegenpartei"/>
+                <field name="apartment_ids"/>
+                <field name="apartment_category_id"/>
+                <field name="account_number" string="IBAN"/>
+                <field name="apartment_assignment"/>
+                <filter name="to_check" string="Zu klären" domain="[('is_reconciled', '=', False)]"/>
+                <filter name="general" string="Allgemein (ohne Wohnung)"
+                        domain="[('apartment_category_id.is_general', '=', True)]"/>
+                <separator/>
+                <filter name="income" string="Einnahmen" domain="[('amount', '&gt;', 0)]"/>
+                <filter name="expense" string="Ausgaben" domain="[('amount', '&lt;', 0)]"/>
+                <separator/>
+                <filter name="filter_date" string="Buchungsdatum" date="date"/>
+                <group>
+                    <filter name="group_category" string="Kategorie"
+                            context="{'group_by': 'apartment_category_id'}"/>
+                    <filter name="group_counterparty" string="Gegenpartei" context="{'group_by': 'partner_name'}"/>
+                    <filter name="group_year" string="Jahr" context="{'group_by': 'date:year'}"/>
+                    <filter name="group_month" string="Monat" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_apartment_bank_line" model="ir.actions.act_window">
+        <field name="name">Bankumsätze</field>
+        <field name="res_model">account.bank.statement.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_apartment_bank_line_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_apartment_bank_line_form')})]"/>
+        <field name="search_view_id" ref="view_apartment_bank_line_search"/>
+        <field name="domain">[('journal_id.type', '=', 'bank')]</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Noch keine Bankumsätze</p>
+            <p>Über <b>Buchhaltung › Import</b> eine DKB-Umsatzliste (CSV) oder eine Jahresdatei
+               umsaetze_JJJJ.xlsx einlesen.</p>
+        </field>
+    </record>
+
+    <record id="action_apartment_bank_line_to_check" model="ir.actions.act_window">
+        <field name="name">Zu klären</field>
+        <field name="res_model">account.bank.statement.line</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_apartment_bank_line_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_apartment_bank_line_form')})]"/>
+        <field name="search_view_id" ref="view_apartment_bank_line_search"/>
+        <field name="domain">[('journal_id.type', '=', 'bank')]</field>
+        <field name="context">{'search_default_to_check': 1}</field>
+        <field name="help" type="html">
+            <p>Keine offenen Umsätze – alles gebucht.</p>
+            <p>Offene Umsätze stehen auf dem Zwischenkonto. Kategorie und Wohnung(en) setzen –
+               der Umsatz wird dann sofort gebucht.</p>
+        </field>
+    </record>
+
+    <!-- ============================================================ Auswertungen -->
+    <record id="action_apartment_cost_overview" model="ir.actions.server">
+        <field name="name">Kostenübersicht je Wohnung</field>
+        <field name="model_id" ref="model_apartment_apartment"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_cost_overview()</field>
+    </record>
+
+    <record id="action_apartment_account_overview" model="ir.actions.act_window">
+        <field name="name">Übersicht nach Konten</field>
+        <field name="res_model">account.move.line</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="domain">[('parent_state', '=', 'posted'),
+                              ('account_id.account_type', 'not in', ('asset_cash', 'asset_receivable', 'liability_payable'))]</field>
+        <field name="context">{'pivot_row_groupby': ['account_id'], 'pivot_column_groupby': ['date:year'],
+                               'pivot_measures': ['debit', 'credit', 'balance']}</field>
+        <field name="help" type="html">
+            <p>Alle gebuchten Beträge je Konto und Jahr, auch die allgemeinen (Bankgebühren,
+               Investment). Soll = Ausgaben, Haben = Einnahmen. Konto „Zwischenkonto“ = noch zu klären.</p>
+        </field>
+    </record>
+
+    <!-- ============================================================ Kategorien / Regeln -->
+    <record id="view_apartment_booking_category_list" model="ir.ui.view">
+        <field name="name">apartment.booking.category.list</field>
+        <field name="model">apartment.booking.category</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="account_id" options="{'no_create': True}"/>
+                <field name="is_general"/>
+                <field name="allow_split"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_apartment_booking_category" model="ir.actions.act_window">
+        <field name="name">Kategorien &amp; Konten</field>
+        <field name="res_model">apartment.booking.category</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p>Noch keine Kategorien – bitte zuerst <b>Konfiguration › Buchhaltung einrichten</b> ausführen.</p>
+        </field>
+    </record>
+
+    <record id="view_apartment_bank_rule_list" model="ir.ui.view">
+        <field name="name">apartment.bank.rule.list</field>
+        <field name="model">apartment.bank.rule</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="counterparty_contains"/>
+                <field name="purpose_contains"/>
+                <field name="assignment_contains" optional="hide"/>
+                <field name="iban" optional="show"/>
+                <field name="amount" optional="show"/>
+                <field name="category_id" options="{'no_create': True}"/>
+                <field name="apartment_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_apartment_bank_rule" model="ir.actions.act_window">
+        <field name="name">Zuordnungsregeln</field>
+        <field name="res_model">apartment.bank.rule</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'active_test': False}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Erste Zuordnungsregel anlegen</p>
+            <p>Regeln ergänzen beim Import fehlende Kategorie oder Wohnung, z. B.
+               Verwendungszweck enthält „5.0100.657366.4“ → Steuer, Brunnenstraße.
+               Mehrere Wohnungen = Betrag wird gleichmäßig aufgeteilt.
+               Bestehende offene Umsätze: in „Zu klären“ markieren und „Regeln anwenden“.</p>
+        </field>
+    </record>
+
+    <!-- ============================================================ Assistenten -->
+    <record id="view_apartment_bank_import_form" model="ir.ui.view">
+        <field name="name">apartment.bank.import.form</field>
+        <field name="model">apartment.bank.import</field>
+        <field name="arch" type="xml">
+            <form string="Bankumsätze importieren">
+                <field name="state" invisible="1"/>
+                <group invisible="state == 'done'">
+                    <field name="journal_id" options="{'no_create': True}"/>
+                    <field name="file_name" invisible="1"/>
+                    <field name="file" filename="file_name"
+                           options="{'accepted_file_extensions': '.csv,.xlsx'}"/>
+                    <field name="update_existing"/>
+                </group>
+                <div invisible="state == 'done'" class="text-muted">
+                    DKB-Umsatzliste (CSV) oder Jahresdatei umsaetze_JJJJ.xlsx mit Spalte „Zuordnung“.
+                    Bereits importierte Umsätze werden erkannt und nicht doppelt angelegt.
+                </div>
+                <group invisible="state != 'done'">
+                    <field name="result" nolabel="1" colspan="2"/>
+                </group>
+                <footer>
+                    <button name="action_import" type="object" string="Importieren"
+                            class="btn-primary" invisible="state == 'done'"/>
+                    <button name="action_view_to_check" type="object" string="Zu klärende anzeigen"
+                            class="btn-primary" invisible="state != 'done'"/>
+                    <button name="action_view_imported" type="object" string="Alle importierten anzeigen"
+                            invisible="state != 'done'"/>
+                    <button special="cancel" string="Schließen"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_apartment_bank_import" model="ir.actions.act_window">
+        <field name="name">Bankumsätze importieren</field>
+        <field name="res_model">apartment.bank.import</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_apartment_interest_entry_form" model="ir.ui.view">
+        <field name="name">apartment.interest.entry.form</field>
+        <field name="model">apartment.interest.entry</field>
+        <field name="arch" type="xml">
+            <form string="Jahreszinsen buchen">
+                <div class="text-muted mb-3">
+                    Die Darlehensraten stehen im Jahr vollständig auf dem Darlehenskonto. Mit dieser
+                    Buchung wird der Zinsanteil laut Zinsbescheinigung der Bank als Schuldzinsen
+                    (Aufwand) gebucht. Hasenwinkel braucht das nicht – dort teilt der Import jede
+                    Rate automatisch in Tilgung und Zins.
+                </div>
+                <group>
+                    <field name="company_id" invisible="1"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="apartment_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                    <field name="loan_account_id" options="{'no_create': True}"/>
+                    <field name="amount"/>
+                    <field name="date"/>
+                    <field name="ref"/>
+                    <field name="journal_id" options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button name="action_post" type="object" string="Buchen" class="btn-primary"/>
+                    <button special="cancel" string="Abbrechen"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_apartment_interest_entry" model="ir.actions.act_window">
+        <field name="name">Jahreszinsen buchen</field>
+        <field name="res_model">apartment.interest.entry</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="view_apartment_accounting_setup_form" model="ir.ui.view">
+        <field name="name">apartment.accounting.setup.form</field>
+        <field name="model">apartment.accounting.setup</field>
+        <field name="arch" type="xml">
+            <form string="Buchhaltung einrichten">
+                <div class="text-muted mb-3" invisible="result">
+                    Legt im aktuellen Unternehmen an (fehlende Teile, kann wiederholt werden):
+                    Kontenplan, Konten und Kategorien (Miete, Hausgeld, …), Kostenstellen-Plan
+                    „Wohnungen“ mit einer Kostenstelle je Wohnung, ein Darlehenskonto je Haus,
+                    das Bankjournal und den Anfangssaldo. Der aktuelle Benutzer erhält die Rechte
+                    „Volle Buchhaltungsfunktionen“ und „Kostenstellen“.
+                </div>
+                <group invisible="result">
+                    <field name="company_id" options="{'no_create': True}"/>
+                    <field name="currency_id" invisible="1"/>
+                    <field name="journal_id" options="{'no_create': True}"/>
+                    <field name="journal_name" invisible="journal_id"/>
+                    <field name="journal_code" invisible="journal_id"/>
+                    <field name="iban"/>
+                    <field name="opening_date"/>
+                    <field name="opening_balance"/>
+                </group>
+                <group invisible="not result">
+                    <field name="result" nolabel="1" colspan="2"/>
+                </group>
+                <footer>
+                    <button name="action_setup" type="object" string="Einrichten" class="btn-primary"
+                            invisible="result"/>
+                    <button special="cancel" string="Schließen"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_apartment_accounting_setup" model="ir.actions.act_window">
+        <field name="name">Buchhaltung einrichten</field>
+        <field name="res_model">apartment.accounting.setup</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

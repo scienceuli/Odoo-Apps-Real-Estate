@@ -35,6 +35,14 @@
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
+                        <button name="action_view_bank_lines" type="object"
+                                class="oe_stat_button" icon="fa-university"
+                                groups="account.group_account_user">
+                            <field name="bank_line_count" widget="statinfo" string="Buchungen"/>
+                        </button>
+                        <button name="action_cost_overview" type="object"
+                                class="oe_stat_button" icon="fa-table" string="Kostenübersicht"
+                                groups="account.group_account_user"/>
                         <button name="action_view_documents" type="object"
                                 class="oe_stat_button" icon="fa-file-pdf-o">
                             <field name="document_count" widget="statinfo" string="Dokumente"/>
@@ -89,10 +97,22 @@
                             <field name="rent_other"/>
                             <field name="rent_total" class="fw-bold"/>
                         </group>
-                        <group string="Übersicht">
+                        <group string="Übersicht (Plan)">
                             <field name="cost_monthly"/>
                             <field name="net_monthly" class="fw-bold"/>
                             <field name="net_yearly"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Ist laut Buchhaltung (lfd. Jahr)">
+                            <field name="booked_income_year"/>
+                            <field name="booked_expense_year"/>
+                            <field name="booked_balance_year" class="fw-bold"/>
+                            <field name="booked_principal_year"/>
+                        </group>
+                        <group string="Buchhaltung">
+                            <field name="analytic_account_id" readonly="1"/>
+                            <field name="loan_account_id" options="{'no_create': True}"/>
                         </group>
                     </group>
                     <notebook>
