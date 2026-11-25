@@ -129,16 +129,16 @@
             <form string="Dokumente importieren">
                 <field name="state" invisible="1"/>
                 <group invisible="state == 'done'">
-                    <field name="file_name" invisible="1"/>
-                    <field name="file" filename="file_name"
+                    <field name="attachment_ids" widget="many2many_binary" required="1"
                            options="{'accepted_file_extensions': '.zip,.pdf'}"/>
                     <field name="sender" placeholder="z. B. info@santo-immobilien.de"/>
                     <field name="apartment_id" options="{'no_create': True}"/>
                     <field name="use_manifest"/>
                 </group>
                 <div invisible="state == 'done'" class="text-muted">
-                    ZIP mit PDFs in Ordnern je Absender (z. B. <code>info@santo-immobilien.de/Jahresabrechnung_2023.pdf</code>)
-                    oder ein einzelnes PDF. Die Wohnung kommt aus <i>Konfiguration › Dokument-Absender</i>,
+                    Eine oder mehrere ZIP-Dateien mit PDFs in Ordnern je Absender
+                    (z. B. <code>info@santo-immobilien.de/Jahresabrechnung_2023.pdf</code>) und/oder
+                    einzelne PDFs; jede Datei wird beim Auswählen hochgeladen. Die Wohnung kommt aus <i>Konfiguration › Dokument-Absender</i>,
                     Dokumentart, Titel, Datum, Jahr und Schlagworte aus Dateiname und PDF-Text.
                     Bereits importierte Dateien (gleiche Prüfsumme) werden übersprungen.
                 </div>

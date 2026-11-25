@@ -66,8 +66,11 @@ Dokumente importieren
 * *Erkennungsmerkmale Dokumente* an der Wohnung (z. B. „WE 6, DG links, Bock“): betreut ein
   Absender mehrere Wohnungen, geht ein Dokument an die Wohnung, deren Merkmale allein im
   Dateinamen bzw. Textanfang vorkommen; sonst an die Standard-Wohnung der Regel.
-* *Dokumente › Import*: ZIP mit Ordnern je Absender (``<absender>/<datei>.pdf``) oder ein
-  einzelnes PDF (Absender bzw. Ersatz-Wohnung im Assistenten angeben). Dokumentart, Titel,
+* *Dokumente › Import*: eine oder mehrere ZIP-Dateien mit Ordnern je Absender
+  (``<absender>/<datei>.pdf``) und/oder einzelne PDFs (Absender bzw. Ersatz-Wohnung im
+  Assistenten angeben). Die Dateien werden einzeln als Anhang hochgeladen (multipart, kein
+  base64 im Speichern-Aufruf) und nach dem Import wieder gelöscht; ein Reverse-Proxy muss
+  Anfragen in Größe der größten Datei zulassen (nginx ``client_max_body_size``). Dokumentart, Titel,
   Datum, Jahr (bei Abrechnungen das Abrechnungsjahr) und Schlagworte werden aus Dateiname und
   PDF-Text bestimmt (``models/document_classifier.py``); nicht Erkennbares wird „Sonstiges“.
   Eine ``manifest.csv`` (``;``, Spalten ``file;apartment;document_type;title;date;year;keywords;sender``)

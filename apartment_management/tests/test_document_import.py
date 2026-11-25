@@ -1,7 +1,7 @@
-import base64
 import io
 import zipfile
 
+from odoo.exceptions import UserError
 from odoo.service.model import call_kw
 from odoo.tests import TransactionCase, tagged
 
@@ -51,10 +51,20 @@ class TestDocumentImport(TransactionCase):
         cls.santo = cls.env["res.partner"].create({
             "name": "SANTO Immobilienverwaltung", "is_company": True, "email": "info@santo-immobilien.de"})
 
+    def _upload(self, data, name):
+        """Like /web/binary/upload_attachment from the many2many_binary widget (res_id 0)."""
+        return self.env["ir.attachment"].create({
+            "name": name, "raw": data, "res_model": "apartment.document.import", "res_id": 0})
+
     def _run(self, data, name="mails.zip", **kw):
+        files = data if isinstance(data, dict) else {name: data}
+        uploads = self.env["ir.attachment"]
+        for file_name, content in files.items():
+            uploads |= self._upload(content, file_name)
         wiz = self.env["apartment.document.import"].create({
-            "file": base64.b64encode(data).decode(), "file_name": name, **kw})
+            "attachment_ids": [(6, 0, uploads.ids)], **kw})
         wiz.action_import()
+        self.assertFalse(uploads.exists(), "upload files are removed after the import")
         return wiz
 
     def test_default_rules(self):
@@ -123,6 +133,29 @@ class TestDocumentImport(TransactionCase):
         self.assertEqual(wiz.document_ids.document_type, "invoice")
         wiz = self._run(make_pdf("Info"), name="info.pdf", apartment_id=self.apts["Zur Mühle II"].id)
         self.assertEqual(wiz.document_ids.apartment_id, self.apts["Zur Mühle II"])
+
+    def test_several_files_and_errors(self):
+        zip_a = make_zip({"info@gvs-immoservice.de/Protokoll_ETV_2024.pdf": make_pdf("Protokoll")})
+        wiz = self._run({
+            "a.zip": zip_a,
+            "Rechnung_0815.pdf": make_pdf("Rechnung"),
+        }, sender="steffen-immobilien.de")
+        self.assertEqual(len(wiz.document_ids), 2, wiz.result + "\n" + wiz.skipped)
+        self.assertEqual(
+            {(d.apartment_id.name, d.document_type) for d in wiz.document_ids},
+            {("Hasenwinkel", "owners_meeting"), ("Zur Mühle I", "invoice")})
+        self.assertIn("a.zip, Rechnung_0815.pdf", wiz.result)
+        # button called without a saved wizard (Odoo 20 after a failed save): clear message
+        with self.assertRaisesRegex(UserError, "nicht gespeichert"):
+            call_kw(self.env["apartment.document.import"], "action_import", [[]], {})
+        with self.assertRaisesRegex(UserError, "mindestens eine"):
+            self.env["apartment.document.import"].create({}).action_import()
+        with self.assertRaisesRegex(UserError, "weder eine ZIP"):
+            self._run(b"hello", name="notes.txt")
+        # vacuumed wizards take their upload files with them
+        upload = self._upload(zip_a, "b.zip")
+        self.env["apartment.document.import"].create({"attachment_ids": [(6, 0, upload.ids)]}).unlink()
+        self.assertFalse(upload.exists())
 
     def test_onchange_suggests_type(self):
         doc = self.env["apartment.document"].new({"file_name": "2025-11-04_HKA_2024_WE_7.pdf"})

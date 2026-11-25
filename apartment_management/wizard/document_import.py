@@ -52,12 +52,13 @@ class ApartmentDocumentImport(models.TransientModel):
     _name = "apartment.document.import"
     _description = "Dokumente importieren"
 
-    file = fields.Binary(
-        "Datei", required=True, attachment=False,
-        help="ZIP mit PDFs (Ordner je Absender, z. B. info@santo-immobilien.de/…; optional "
-             "manifest.csv mit vorab bestimmter Zuordnung) oder ein einzelnes PDF",
+    attachment_ids = fields.Many2many(
+        "ir.attachment", "apartment_document_import_attachment_rel", "wizard_id", "attachment_id",
+        string="Dateien",
+        help="Eine oder mehrere ZIP-Dateien mit PDFs (Ordner je Absender, z. B. "
+             "info@santo-immobilien.de/…; optional manifest.csv mit vorab bestimmter Zuordnung) "
+             "und/oder einzelne PDFs. Jede Datei wird beim Auswählen einzeln hochgeladen.",
     )
-    file_name = fields.Char("Dateiname")
     sender = fields.Char(
         "Absender", help="Für ein einzelnes PDF oder eine ZIP ohne Absender-Ordner: "
                          "E-Mail-Adresse oder Domain des Absenders",
@@ -80,14 +81,23 @@ class ApartmentDocumentImport(models.TransientModel):
     # ------------------------------------------------------------------ helpers
 
     def _entries(self):
-        """[(path, bytes)] of the PDFs in the upload, plus the manifest (or {})."""
-        data = _raw_bytes(self.file)
-        name = self.file_name or "dokument.pdf"
-        if data[:5] == b"%PDF-":
-            return [(name, data)], {}, []
-        if data[:2] != b"PK":
-            raise UserError(_("Bitte eine ZIP-Datei oder ein PDF hochladen."))
-        entries, manifest, ignored = [], {}, []
+        """[(path, bytes, manifest row)] of the PDFs in the uploads, plus ignored paths."""
+        if not self.attachment_ids:
+            raise UserError(_("Bitte mindestens eine ZIP-Datei oder ein PDF hochladen."))
+        entries, ignored = [], []
+        for att in self.attachment_ids:
+            data = _raw_bytes(att.raw)
+            name = att.name or "dokument.pdf"
+            if data[:5] == b"%PDF-":
+                entries.append((name, data, {}))
+            elif data[:2] == b"PK":
+                entries += self._zip_entries(name, data, ignored)
+            else:
+                raise UserError(_("%s ist weder eine ZIP-Datei noch ein PDF.", name))
+        return entries, ignored
+
+    def _zip_entries(self, zip_name, data, ignored):
+        files, manifest = [], {}
         try:
             with zipfile.ZipFile(io.BytesIO(data)) as zf:
                 for info in zf.infolist():
@@ -102,10 +112,10 @@ class ApartmentDocumentImport(models.TransientModel):
                     if not base.lower().endswith(".pdf"):
                         ignored.append(path)
                         continue
-                    entries.append((path, zf.read(info)))
+                    files.append((path, zf.read(info)))
         except zipfile.BadZipFile as e:
-            raise UserError(_("Die ZIP-Datei ist beschädigt: %s", e)) from e
-        return entries, manifest, ignored
+            raise UserError(_("%(file)s ist beschädigt: %(error)s", file=zip_name, error=e)) from e
+        return [(path, pdf, manifest.get(path) or {}) for path, pdf in files]
 
     def _partner_for(self, rule, sender):
         if rule and rule.partner_id:
@@ -116,11 +126,10 @@ class ApartmentDocumentImport(models.TransientModel):
         partner = self.env["res.partner"].search([("email", "=ilike", f"%@{domain}")], limit=1)
         return partner.commercial_partner_id
 
-    def _plan(self, path, data, manifest, rules, apartments_by_name):
+    def _plan(self, path, data, row, rules, apartments_by_name):
         """Values for one file, or (None, reason) if it cannot be assigned."""
         Doc = self.env["apartment.document"]
         sender = dc.sender_from_path(path) or self.sender or ""
-        row = manifest.get(path) or {}
         if row.get("sender"):
             sender = row["sender"].strip()
         rule = dc.match_sender(sender, rules) if sender else None
@@ -176,8 +185,15 @@ class ApartmentDocumentImport(models.TransientModel):
     # ------------------------------------------------------------------ action
 
     def action_import(self):
+        if not self:
+            # Odoo 20 runs the button even when saving the wizard failed with a connection
+            # error (it keeps the changes as "offline" changes); the record then has no id.
+            raise UserError(_(
+                "Der Import-Assistent konnte nicht gespeichert werden – die Verbindung zum Server "
+                "ist abgebrochen. Bitte die Seite neu laden und den Import erneut starten."
+            ))
         self.ensure_one()
-        entries, manifest, ignored = self._entries()
+        entries, ignored = self._entries()
         if not entries:
             raise UserError(_("Keine PDF-Dateien gefunden."))
         Doc = self.env["apartment.document"]
@@ -186,8 +202,8 @@ class ApartmentDocumentImport(models.TransientModel):
 
         vals_list, skipped, seen = [], [], set()
         duplicates = 0
-        for path, data in entries:
-            vals, reason = self._plan(path, data, manifest, rules, apartments_by_name)
+        for path, data, row in entries:
+            vals, reason = self._plan(path, data, row, rules, apartments_by_name)
             if not vals:
                 skipped.append(f"{path}: {reason}")
                 continue
@@ -212,7 +228,7 @@ class ApartmentDocumentImport(models.TransientModel):
         for doc in docs:
             by_apartment[doc.apartment_id.name] = by_apartment.get(doc.apartment_id.name, 0) + 1
         lines = [
-            _("Datei: %s", self.file_name or "-"),
+            _("Dateien: %s", ", ".join(self.attachment_ids.mapped("name"))),
             _("PDF-Dateien: %s", len(entries)),
             _("Importiert: %s", len(docs)),
             _("Bereits vorhanden: %s", duplicates),
@@ -223,12 +239,15 @@ class ApartmentDocumentImport(models.TransientModel):
             _("Je Dokumentart:"),
             *[f"  {k}: {v}" for k, v in sorted(by_type.items())],
         ]
+        uploads = self._uploads()
         self.write({
             "state": "done",
             "result": "\n".join(lines),
             "skipped": "\n".join(skipped),
             "document_ids": [(6, 0, docs.ids)],
+            "attachment_ids": [(5, 0, 0)],
         })
+        uploads.unlink()  # the PDFs are now stored in the documents
         return {
             "type": "ir.actions.act_window",
             "res_model": self._name,
@@ -236,6 +255,16 @@ class ApartmentDocumentImport(models.TransientModel):
             "view_mode": "form",
             "target": "new",
         }
+
+    def _uploads(self):
+        """Temporary upload files of these wizards (not linked to any other record)."""
+        return self.attachment_ids.filtered(lambda a: a.res_model == self._name and not a.res_id)
+
+    def unlink(self):
+        uploads = self._uploads()  # also when the transient records are vacuumed
+        res = super().unlink()
+        uploads.unlink()
+        return res
 
     def action_view_documents(self):
         self.ensure_one()
