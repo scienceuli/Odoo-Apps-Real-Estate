@@ -163,3 +163,19 @@ class TestDocumentImport(TransactionCase):
         self.assertEqual(doc.document_type, "utility_statement")
         self.assertEqual(doc.year, 2024)
         self.assertEqual(doc.name, "HKA 2024 WE 7")
+
+    def test_year_follows_date(self):
+        Doc = self.env["apartment.document"]
+        base = {"apartment_id": self.apts["Herbartstraße"].id, "file": "JVBERg==", "file_name": "x.pdf"}
+        lease = Doc.create({**base, "name": "Mietvertrag", "document_type": "lease",
+                            "date": "2019-03-01"})
+        self.assertEqual(lease.year, 2019)
+        lease.date = "2020-05-01"
+        self.assertEqual(lease.year, 2020, "non-period documents always follow the date")
+        hga = Doc.create({**base, "name": "HGA", "document_type": "annual_statement",
+                          "date": "2024-11-18", "year": 2023})
+        self.assertEqual(hga.year, 2023, "an explicit reference year is kept")
+        hga.date = "2024-12-01"
+        self.assertEqual(hga.year, 2023, "a period document keeps its reference year")
+        hga.document_type = "invoice"
+        self.assertEqual(hga.year, 2024)

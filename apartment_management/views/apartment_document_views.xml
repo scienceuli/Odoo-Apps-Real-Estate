@@ -75,7 +75,7 @@
                 <group>
                     <filter name="group_apartment" string="Wohnung" context="{'group_by': 'apartment_id'}"/>
                     <filter name="group_type" string="Dokumentart" context="{'group_by': 'document_type'}"/>
-                    <filter name="group_year" string="Jahr" context="{'group_by': 'year'}"/>
+                    <filter name="group_year" string="Bezugsjahr" context="{'group_by': 'year'}"/>
                     <filter name="group_partner" string="Kontakt" context="{'group_by': 'partner_id'}"/>
                 </group>
             </search>

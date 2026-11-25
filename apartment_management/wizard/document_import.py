@@ -9,6 +9,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
 from ..models import document_classifier as dc
+from ..models.apartment_document import PERIOD_TYPES
 
 _logger = logging.getLogger(__name__)
 
@@ -158,11 +159,12 @@ class ApartmentDocumentImport(models.TransientModel):
         dtype = (row.get("document_type") or "").strip() or res["document_type"]
         if dtype not in types:
             dtype = "other"
-        date, year = res["date"], res["year"]
+        date, year, row_year = res["date"], res["year"], 0
         if row:
             try:
                 date = fields.Date.to_date((row.get("date") or "").strip() or None) or date
-                year = int((row.get("year") or "").strip() or 0) or year
+                row_year = int((row.get("year") or "").strip() or 0)
+                year = row_year or year
             except ValueError:
                 info.append(_("Datum/Jahr in manifest.csv ungültig"))
         keywords = row["keywords"] if "keywords" in row else ", ".join(res["keywords"])
@@ -171,7 +173,6 @@ class ApartmentDocumentImport(models.TransientModel):
             "name": (row.get("title") or "").strip() or res["title"],
             "document_type": dtype,
             "date": date or False,
-            "year": year or False,
             "keywords": keywords or False,
             "sender": sender or False,
             "partner_id": self._partner_for(rule, sender).id or False,
@@ -180,6 +181,9 @@ class ApartmentDocumentImport(models.TransientModel):
             "checksum": Doc._checksum(data),
             "import_info": "; ".join(info)[:250],
         }
+        # otherwise the year is computed from the date
+        if year and (row_year or dtype in PERIOD_TYPES):
+            vals["year"] = year
         return vals, None
 
     # ------------------------------------------------------------------ action
