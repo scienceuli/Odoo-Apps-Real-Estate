@@ -4,13 +4,16 @@
         <field name="name">apartment.document.list</field>
         <field name="model">apartment.document</field>
         <field name="arch" type="xml">
-            <list>
+            <list multi_edit="1">
                 <field name="date"/>
-                <field name="year"/>
+                <field name="year" options="{'format': false}"/>
                 <field name="apartment_id"/>
                 <field name="document_type"/>
                 <field name="name"/>
+                <field name="keywords" optional="show"/>
                 <field name="partner_id" optional="show"/>
+                <field name="sender" optional="hide"/>
+                <field name="import_info" optional="hide"/>
                 <field name="file_name" column_invisible="True"/>
                 <field name="file" filename="file_name" widget="binary"/>
             </list>
@@ -29,6 +32,7 @@
                             <field name="apartment_id"/>
                             <field name="document_type"/>
                             <field name="partner_id"/>
+                            <field name="keywords"/>
                         </group>
                         <group>
                             <field name="date"/>
@@ -36,6 +40,8 @@
                             <field name="file_name" invisible="1"/>
                             <field name="file" filename="file_name"
                                    options="{'accepted_file_extensions': '.pdf'}"/>
+                            <field name="sender" invisible="not sender"/>
+                            <field name="import_info" invisible="not import_info"/>
                         </group>
                     </group>
                     <field name="note" placeholder="Bemerkung ..."/>
@@ -50,18 +56,27 @@
         <field name="model">apartment.document</field>
         <field name="arch" type="xml">
             <search>
-                <field name="name"/>
+                <field name="name" filter_domain="['|', '|', ('name', 'ilike', self), ('keywords', 'ilike', self), ('file_name', 'ilike', self)]"/>
                 <field name="apartment_id"/>
                 <field name="partner_id"/>
+                <field name="keywords"/>
+                <field name="sender"/>
                 <field name="year"/>
                 <filter name="filter_lease" string="Mietverträge" domain="[('document_type', '=', 'lease')]"/>
                 <filter name="filter_annual" string="Jahresabrechnungen" domain="[('document_type', '=', 'annual_statement')]"/>
                 <filter name="filter_utility" string="Nebenkostenabrechnungen" domain="[('document_type', '=', 'utility_statement')]"/>
                 <filter name="filter_tax" string="Steuer" domain="[('document_type', '=', 'tax')]"/>
+                <filter name="filter_owners_meeting" string="Eigentümerversammlungen" domain="[('document_type', '=', 'owners_meeting')]"/>
+                <filter name="filter_handover" string="Übergabeprotokolle" domain="[('document_type', '=', 'handover')]"/>
+                <filter name="filter_invoice" string="Rechnungen" domain="[('document_type', '=', 'invoice')]"/>
+                <filter name="filter_other" string="Sonstiges" domain="[('document_type', '=', 'other')]"/>
+                <separator/>
+                <filter name="filter_imported" string="Importiert" domain="[('checksum', '!=', False)]"/>
                 <group>
                     <filter name="group_apartment" string="Wohnung" context="{'group_by': 'apartment_id'}"/>
                     <filter name="group_type" string="Dokumentart" context="{'group_by': 'document_type'}"/>
                     <filter name="group_year" string="Jahr" context="{'group_by': 'year'}"/>
+                    <filter name="group_partner" string="Kontakt" context="{'group_by': 'partner_id'}"/>
                 </group>
             </search>
         </field>
@@ -71,5 +86,83 @@
         <field name="name">Dokumente</field>
         <field name="res_model">apartment.document</field>
         <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============================================================ Absender-Zuordnung -->
+    <record id="view_apartment_document_sender_list" model="ir.ui.view">
+        <field name="name">apartment.document.sender.list</field>
+        <field name="model">apartment.document.sender</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <header>
+                    <button name="action_create_defaults" type="object" string="Standard-Zuordnungen anlegen"
+                            display="always"/>
+                </header>
+                <field name="pattern"/>
+                <field name="apartment_id" options="{'no_create': True}"/>
+                <field name="alternative_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                <field name="partner_id" optional="show"/>
+                <field name="active" widget="boolean_toggle" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_apartment_document_sender" model="ir.actions.act_window">
+        <field name="name">Dokument-Absender</field>
+        <field name="res_model">apartment.document.sender</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Absender einer Wohnung zuordnen</p>
+            <p>Beim Dokumenten-Import wird jede Datei über den Absender (Ordnername bzw.
+               E-Mail-Domain) einer Wohnung zugeordnet. „Standard-Zuordnungen anlegen“ legt die
+               bekannten Hausverwaltungen an. Betreut eine Verwaltung mehrere Wohnungen eines
+               Hauses, entscheiden die „Erkennungsmerkmale Dokumente“ der Wohnungen
+               (z. B. „WE 6, DG links“).</p>
+        </field>
+    </record>
+
+    <!-- ============================================================ Import-Assistent -->
+    <record id="view_apartment_document_import_form" model="ir.ui.view">
+        <field name="name">apartment.document.import.form</field>
+        <field name="model">apartment.document.import</field>
+        <field name="arch" type="xml">
+            <form string="Dokumente importieren">
+                <field name="state" invisible="1"/>
+                <group invisible="state == 'done'">
+                    <field name="file_name" invisible="1"/>
+                    <field name="file" filename="file_name"
+                           options="{'accepted_file_extensions': '.zip,.pdf'}"/>
+                    <field name="sender" placeholder="z. B. info@santo-immobilien.de"/>
+                    <field name="apartment_id" options="{'no_create': True}"/>
+                    <field name="use_manifest"/>
+                </group>
+                <div invisible="state == 'done'" class="text-muted">
+                    ZIP mit PDFs in Ordnern je Absender (z. B. <code>info@santo-immobilien.de/Jahresabrechnung_2023.pdf</code>)
+                    oder ein einzelnes PDF. Die Wohnung kommt aus <i>Konfiguration › Dokument-Absender</i>,
+                    Dokumentart, Titel, Datum, Jahr und Schlagworte aus Dateiname und PDF-Text.
+                    Bereits importierte Dateien (gleiche Prüfsumme) werden übersprungen.
+                </div>
+                <group invisible="state != 'done'">
+                    <field name="result" nolabel="1" colspan="2"/>
+                </group>
+                <group invisible="state != 'done' or not skipped" string="Übersprungen">
+                    <field name="skipped" nolabel="1" colspan="2"/>
+                </group>
+                <footer>
+                    <button name="action_import" type="object" string="Importieren"
+                            class="btn-primary" invisible="state == 'done'"/>
+                    <button name="action_view_documents" type="object" string="Importierte anzeigen"
+                            class="btn-primary" invisible="state != 'done'"/>
+                    <button special="cancel" string="Schließen"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_apartment_document_import" model="ir.actions.act_window">
+        <field name="name">Dokumente importieren</field>
+        <field name="res_model">apartment.document.import</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
     </record>
 </odoo>

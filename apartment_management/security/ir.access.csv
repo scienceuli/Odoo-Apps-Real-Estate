@@ -11,3 +11,5 @@ apartment_bank_rule_company_rule,apartment.bank.rule company,apartment.bank.rule
 access_apartment_bank_import_accountant,apartment.bank.import accountant,apartment.bank.import,account.group_account_user,crud,
 access_apartment_interest_entry_accountant,apartment.interest.entry accountant,apartment.interest.entry,account.group_account_user,crud,
 access_apartment_accounting_setup_manager,apartment.accounting.setup manager,apartment.accounting.setup,account.group_account_manager,crud,
+access_apartment_document_sender_user,apartment.document.sender user,apartment.document.sender,base.group_user,crud,
+access_apartment_document_import_user,apartment.document.import user,apartment.document.import,base.group_user,crud,

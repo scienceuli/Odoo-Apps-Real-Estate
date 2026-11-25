@@ -25,8 +25,12 @@
     <menuitem id="menu_apartment_account_overview" name="Übersicht nach Konten"
               parent="menu_apartment_accounting" action="action_apartment_account_overview" sequence="60"/>
 
-    <menuitem id="menu_apartment_document" name="Dokumente" parent="menu_apartment_root"
-              action="action_apartment_document" sequence="30"/>
+    <menuitem id="menu_apartment_document_root" name="Dokumente" parent="menu_apartment_root"
+              sequence="30"/>
+    <menuitem id="menu_apartment_document" name="Dokumente" parent="menu_apartment_document_root"
+              action="action_apartment_document" sequence="10"/>
+    <menuitem id="menu_apartment_document_import" name="Import" parent="menu_apartment_document_root"
+              action="action_apartment_document_import" sequence="20"/>
 
     <menuitem id="menu_apartment_config" name="Konfiguration" parent="menu_apartment_root"
               sequence="90"/>
@@ -34,6 +38,8 @@
               action="contacts.action_contacts" sequence="10"/>
     <menuitem id="menu_apartment_booking_category" name="Kategorien &amp; Konten" parent="menu_apartment_config"
               action="action_apartment_booking_category" sequence="20" groups="account.group_account_user"/>
+    <menuitem id="menu_apartment_document_sender" name="Dokument-Absender" parent="menu_apartment_config"
+              action="action_apartment_document_sender" sequence="35"/>
     <menuitem id="menu_apartment_bank_rule" name="Zuordnungsregeln" parent="menu_apartment_config"
               action="action_apartment_bank_rule" sequence="30" groups="account.group_account_user"/>
     <menuitem id="menu_apartment_accounting_setup" name="Buchhaltung einrichten" parent="menu_apartment_config"

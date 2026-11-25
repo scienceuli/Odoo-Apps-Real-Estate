@@ -32,6 +32,11 @@ class Apartment(models.Model):
     rooms = fields.Float("Zimmer", digits=(4, 1))
     area = fields.Float("Wohnfläche (m²)", digits=(8, 2))
     unit_number = fields.Char("Wohnungs-Nr.")
+    document_match_terms = fields.Char(
+        "Erkennungsmerkmale Dokumente",
+        help="Kommagetrennte Begriffe, an denen Dokumente dieser Wohnung erkannt werden, wenn "
+             "eine Verwaltung mehrere Wohnungen betreut (z. B. 'WE 6, DG links, Bock').",
+    )
     land_register = fields.Char("Grundbuch / Flurstück")
 
     # Beteiligte

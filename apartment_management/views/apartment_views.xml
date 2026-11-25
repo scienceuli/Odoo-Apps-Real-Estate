@@ -67,6 +67,7 @@
                                        options="{'no_create': True}"/>
                             </div>
                             <field name="unit_number"/>
+                            <field name="document_match_terms" placeholder="z. B. WE 6, DG links"/>
                             <field name="floor"/>
                             <field name="land_register"/>
                         </group>
@@ -154,6 +155,7 @@
                                     <field name="year"/>
                                     <field name="document_type"/>
                                     <field name="name"/>
+                                    <field name="keywords" optional="hide"/>
                                     <field name="file_name" column_invisible="True"/>
                                     <field name="file" filename="file_name" widget="binary"/>
                                 </list>

@@ -55,3 +55,22 @@ eine Auswertung der gebuchten Beträge ihrer Kostenstelle.
   (Einnahmen, Kosten, Überschuss, Tilgung). Die Kostenpositionen der Wohnung bleiben
   als Plan.
 * Investment und Bankkosten sind allgemein (ohne Kostenstelle).
+
+Dokumente importieren
+---------------------
+
+* *Konfiguration › Dokument-Absender*: Absender (E-Mail, Domain oder Teil davon) → Wohnung.
+  „Standard-Zuordnungen anlegen“ legt die bekannten Hausverwaltungen an (santo, heye →
+  Herbartstraße; gvs → Hasenwinkel; hendlmaier, kaprimo, mattern → Brunnenstraße;
+  schwerdtner, viveto, steffen, t-online → Zur Mühle I mit Zur Mühle II als weiterer Wohnung).
+* *Erkennungsmerkmale Dokumente* an der Wohnung (z. B. „WE 6, DG links, Bock“): betreut ein
+  Absender mehrere Wohnungen, geht ein Dokument an die Wohnung, deren Merkmale allein im
+  Dateinamen bzw. Textanfang vorkommen; sonst an die Standard-Wohnung der Regel.
+* *Dokumente › Import*: ZIP mit Ordnern je Absender (``<absender>/<datei>.pdf``) oder ein
+  einzelnes PDF (Absender bzw. Ersatz-Wohnung im Assistenten angeben). Dokumentart, Titel,
+  Datum, Jahr (bei Abrechnungen das Abrechnungsjahr) und Schlagworte werden aus Dateiname und
+  PDF-Text bestimmt (``models/document_classifier.py``); nicht Erkennbares wird „Sonstiges“.
+  Eine ``manifest.csv`` (``;``, Spalten ``file;apartment;document_type;title;date;year;keywords;sender``)
+  in der ZIP hat Vorrang – so kann eine Vorab-Klassifizierung mit OCR (gescannte PDFs haben
+  keinen Text) mitgegeben werden. Gleiche Dateien (SHA-1) werden nicht doppelt angelegt.
+* Beim manuellen Hochladen schlägt der Dateiname Titel, Dokumentart und Jahr vor.

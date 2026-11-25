@@ -1,7 +1,7 @@
 {
     "name": "Wohnungsverwaltung",
     "summary": "Einfache Verwaltung vermieteter Wohnungen: Mieter, Miete, Kosten, Dokumente; Bankumsätze in der Odoo-Buchhaltung mit Kostenstelle je Wohnung",
-    "version": "20.0.2.0.0",
+    "version": "20.0.2.1.0",
     "category": "Real Estate",
     "license": "AGPL-3",
     "author": "Ulrich Kilian",
