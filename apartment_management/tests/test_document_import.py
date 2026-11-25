@@ -2,6 +2,7 @@ import base64
 import io
 import zipfile
 
+from odoo.service.model import call_kw
 from odoo.tests import TransactionCase, tagged
 
 
@@ -65,6 +66,10 @@ class TestDocumentImport(TransactionCase):
         self.assertIn("DG links", self.apts["Zur Mühle II"].document_match_terms)
         # idempotent
         self.env["apartment.document.sender"].action_create_defaults()
+        self.assertEqual(self.env["apartment.document.sender"].search_count([]), 10)
+        # as called by the list header button (web client passes the selected ids first)
+        call_kw(self.env["apartment.document.sender"], "action_create_defaults", [[]], {})
+        call_kw(self.env["apartment.document.sender"], "action_create_defaults", [rules[:2].ids], {})
         self.assertEqual(self.env["apartment.document.sender"].search_count([]), 10)
 
     def test_zip_import(self):

@@ -1,4 +1,4 @@
-from odoo import _, api, fields, models
+from odoo import _, fields, models
 from odoo.exceptions import UserError
 
 from .document_classifier import DEFAULT_SENDERS, DEFAULT_TERMS
@@ -40,9 +40,12 @@ class ApartmentDocumentSender(models.Model):
             for a in self.apartment_id | self.alternative_ids
         ]
 
-    @api.model
     def action_create_defaults(self):
-        """Create the sender rules of the first import (idempotent)."""
+        """Create the sender rules of the first import (idempotent).
+
+        Not @api.model: the list header button (display="always") passes the selected ids
+        (possibly none) as first argument, which call_kw only consumes for record methods.
+        """
         Apartment = self.env["apartment.apartment"]
         by_name = {a.name: a for a in Apartment.search([])}
         missing = sorted({n for _p, n, alt in DEFAULT_SENDERS for n in [n, *alt]} - set(by_name))

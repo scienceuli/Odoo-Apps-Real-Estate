@@ -1,0 +1,46 @@
+# macOS
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+Icon?
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments / local config
+.venv/
+venv/
+env/
+.env
+*.local
+
+# Odoo
+*.log
+filestore/
+*.pot~
+*.po~
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.#*
+
+# Archives and dumps (data exports, DB backups)
+*.zip
+*.dump
+*.sql.gz
